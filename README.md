@@ -3,8 +3,8 @@ This repository contains the client code used to control a Franka robot in the r
 - Model server code is available [here](https://github.com/PKU-EPIC/GraspVLA).
 - Simulation evaluation code is available [here](https://github.com/MiYanDoris/GraspVLA-playground).
 
-**CAUTION:
-Ensure that the emergency stop button is available. If the robot arm behaves abnormally, press the emergency stop immediately.**
+**⚠️ CAUTION:
+Ensure that the emergency stop button is available. If the robot arm behaves abnormally (e.g., docker images competing for control), press the emergency stop immediately.**
 
 ## Hardware Requirements
 - **Robot**: A Franka robot. The default Dockerfile supports the latest Franka Research 3. For earlier FER3 versions, use Dockerfile_FER3.
@@ -72,7 +72,7 @@ docker compose run --rm main
 
 * Remember to run `docker compose down -t 0` after the experiments.
 
-* Start with simple cases (e.g., a single banana on a table) to test the pipeline
+* Start by testing simple cases—like placing 4-5 objects near the center of workspace (x=0.5m, y=0m) on a clean table—to verify pipeline functionality.
 
 * When prompted, type the object name and press enter. The client will auto-complete the instruction as "pick up {object_name}".
 
@@ -82,9 +82,13 @@ docker compose run --rm main
   
   - `q` - finish trajectory and reset to initial pose (opens gripper)
 
-* Try nonblocking mode by setting `MODE` to `nonblocking` in `demo.env`.
+* Nonblocking mode:
 
-* The precision of the controller decreases near the edge of the workspace, and the success rate may therefore degrade.
+  - Set `MODE` to `nonblocking` in `demo.env`. 
+  
+  - Parameters are pre-tuned for ~250ms inference delay. Adjust according to the inference delay in your environment.
+
+* Controller precision decreases near workspace edges, which may reduce success rates. Therefore, begin testing with objects positioned near the center of the workspace.
 
 ### Terminal Output
 - `observation sent...` - Observation sent to server
@@ -94,10 +98,13 @@ docker compose run --rm main
 - Gripper actions and delta translations are printed in console
 
 ### Safety Features
-- To avoid objects from falling when opening the gripper (q), enable automatic lowering by adding `--automatically_put_down` flag to `docker-compose.yml`. It will move down the gripper by 10cm before opening the gripper to prevent the object from falling and breaking.
 
 - When the robot receives an external force larger than FORCE_LIMIT (default 15N), it will print `large external force or robot abnormal, trying to recover...` and lift by 5cm to avoid collision.
 
+- To avoid objects from falling when opening the gripper (q), enable automatic lowering by adding `--automatically_put_down` flag to `docker-compose.yml`. It will move down the gripper by 10cm before opening the gripper to prevent the object from falling and breaking. If you enable this feature, press `q` after the object is lifted high enough to avoid robot arm colliding with the table.
+
+### Category List
+We provide a list of categories we've tested in `res/category_list.txt`. You can start with these verified categories to test the correctness of the pipeline.
 
 ## Citation
 

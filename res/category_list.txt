@@ -1,0 +1,63 @@
+Synthetic categories:
+soccer ball
+panda
+banana
+carrot
+bottle
+box
+garlic
+lion
+tape
+strawberry
+pepper
+truck
+elephant
+toothpaste
+pen
+packet
+screwdriver
+pliers
+mushroom
+hamburger
+dog
+padlock
+octopus
+mouse
+hairbrush
+cherry
+baguette
+sausage
+ball
+nutcracker
+pumpkin
+car
+spoon
+fork
+orange
+
+
+Web Categories:
+bread
+icecream
+lamb
+duck
+towel
+glue
+bear
+basketball
+stapler
+grape
+eggplant
+flashlight
+ambulance
+pineapple
+cucumber
+blackboard rubber
+giraffe
+softball
+lemon
+bulldozer
+volleyball
+potato
+test pencil
+tiger
