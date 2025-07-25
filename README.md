@@ -13,12 +13,9 @@ Ensure that the emergency stop button is available. If the robot arm behaves abn
 
 
 ## Installation
-We strongly recommend using docker. For Docker installation instructions, see https://docs.docker.com/engine/install/.
 
-### Build
-```
-docker build . -t graspvla_franka_ros:latest
-```
+1. Install docker (https://docs.docker.com/engine/install/);
+2. Run `docker build . -t graspvla_franka_ros:latest`.
 
 ## Configuration
 ### Franka
@@ -44,33 +41,36 @@ docker build . -t graspvla_franka_ros:latest
 
 <img src="res/camera_setup.jpg" alt="camera_setup_ours" width="70%" height="70%" style="display: block; margin: 0 auto;">
 
-- **Approximate Calibration**. Since camera extrinsics are randomized in our dataset, you only need to approximately match your camera setup to the one shown above.
+- **Approximate Calibration**. Since camera extrinsics are randomized in our dataset, you only need to approximately match your camera setup to the one shown above. Following the steps below:
 
-  - **Step 1**: Roughly position the two cameras with a tape measure according to the above figure.
+  1. Roughly position the two cameras with a tape measure according to the above figure.
 
-    **Step 2**: Ensure that your table surface is below z=0.2m in robot base frame, as the end effector will automatically move to z=0.2m in the next step.
+  2. Ensure that your table surface is below z=0.2m in robot base frame, as the end effector will automatically move to z=0.2m in the next step.
 
-  - **Step 3**: Run `xhost + && source demo.env && docker compose run calibrate_camera` for further calibration. Once the arm stops moving, adjust your camera poses such that the green reference mask (front_ref/side_ref) aligns with the real-world images in RViz. Also verify that the cameras are level, such that table edges appear roughly horizontal. You can refer to the below image for calibrated status.
+  3. Run `xhost + && source demo.env && docker compose run --rm calibrate_camera` for further calibration. Once the arm stops moving, adjust your camera poses such that the green reference mask (front_ref/side_ref) aligns with the real-world images in RViz. Also verify that the cameras are level, such that table edges appear roughly horizontal. You can refer to the below image for calibrated status.
 
-<img src="res/camera_ref.jpg" alt="camera_setup_ours" width="50%" height="50%" style="display: block; margin: 0 auto;">
+  <img src="res/camera_ref.jpg" alt="camera_setup_ours" width="50%" height="50%" style="display: block; margin: 0 auto;">
 
+  4. Run `docker compose down -t 0`.
 
 ### Connection to the Model Server
-Start the model server following the instructions in [GraspVLA](https://github.com/PKU-EPIC/GraspVLA) and modify the `SERVER_IP` and `SERVER_PORT` in `demo.env` to your server ip and port. If you use remote server, you can set them to be its public address. If you start the server on the same machine as the client, you can set them to be 127.0.0.1 and 6666.
+Start the model server following the instructions in [GraspVLA](https://github.com/PKU-EPIC/GraspVLA) and modify the `SERVER_IP` and `SERVER_PORT` in `demo.env` to your server ip and port. If you use remote server, you can set them to be its public address. If you start the server on the same machine as the client, you can set them to be `127.0.0.1` and `6666`.
 
 You can run the following command to validate the server is running. It will return ✓ if the server returns a valid result.
-```
+```bash
 source demo.env
-python3 validate_server.py
+docker compose run --rm validate_server
 ```
 
 ## Inference
 To start inference, run the following commands:
-```
+```bash
 xhost +
 source demo.env
-docker compose run main
+docker compose run --rm main
 ```
+
+**NOTE**: Remember to run `docker compose down -t 0` after the experiments.
 
 ### Usage Tips
   - Start with simple cases (e.g., a single banana on a table) to test the pipeline
