@@ -32,14 +32,14 @@ Ensure that the emergency stop button is available. If the robot arm behaves abn
 
     - To use the original fingers: Remove the `--extended_finger` flag in `docker-compose.yml` (this adjusts proprioception accordingly).
 
-<img src="res/finger_extention.jpg" alt="finger_extension" width="30%" height="30%" style="display: block; margin: 0 auto;">
+      <img src="res/finger_extention.jpg" alt="finger_extension" width="30%" height="30%" style="display: block; margin: 0 auto;">
 
 ### Camera
 - **Serial Number**. Modify the `FRONT_CAMERA_SERIAL_NUMBER` and `SIDE_CAMERA_SERIAL_NUMBER` in `demo.env` to your camera serial numbers.
 
     You can find the serial numbers of your Realsense cameras in the RealSense Viewer tool by clicking the 'Info' option at the top of the Viewer's options side-panel.
 
-<img src="res/camera_setup.jpg" alt="camera_setup_ours" width="70%" height="70%" style="display: block; margin: 0 auto;">
+    <img src="res/camera_setup.jpg" alt="camera_setup_ours" width="70%" height="70%" style="display: block; margin: 0 auto;">
 
 - **Approximate Calibration**. Since camera extrinsics are randomized in our dataset, you only need to approximately match your camera setup to the one shown above. Following the steps below:
 
@@ -49,7 +49,7 @@ Ensure that the emergency stop button is available. If the robot arm behaves abn
 
   3. Run `xhost + && source demo.env && docker compose run --rm calibrate_camera` for further calibration. Once the arm stops moving, adjust your camera poses such that the green reference mask (front_ref/side_ref) aligns with the real-world images in RViz. Also verify that the cameras are level, such that table edges appear roughly horizontal. You can refer to the below image for calibrated status.
 
-  <img src="res/camera_ref.jpg" alt="camera_setup_ours" width="50%" height="50%" style="display: block; margin: 0 auto;">
+    <img src="res/camera_ref.jpg" alt="camera_setup_ours" width="50%" height="50%" style="display: block; margin: 0 auto;">
 
   4. Run `docker compose down -t 0`.
 
