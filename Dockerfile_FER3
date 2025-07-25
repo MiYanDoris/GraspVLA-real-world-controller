@@ -1,0 +1,63 @@
+FROM osrf/ros:noetic-desktop-full
+
+##################
+# parameters
+##################
+
+# Set IP of Franka control PC
+ENV FCI_IP=172.16.0.2
+
+##################
+# libfranka build
+##################
+
+# Download and build the required franka libraries
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    libpoco-dev \
+    libeigen3-dev
+
+RUN git clone --recursive https://github.com/frankaemika/libfranka --branch 0.9.1 # only for FR3
+WORKDIR /libfranka
+RUN mkdir build
+WORKDIR /libfranka/build
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF ..
+RUN cmake --build .
+
+# Make a Debian package and install it
+RUN cpack -G DEB
+RUN dpkg -i libfranka*.deb
+
+##################
+# franka_ros build
+##################
+
+# Setup ROS catkin workspace
+WORKDIR /catkin_ws
+RUN mkdir src
+SHELL ["/bin/bash", "-c"]
+RUN source /opt/ros/noetic/setup.sh && catkin_init_workspace src
+
+# Add lines to the bashrc file that source ROS
+RUN echo "source /ros_entrypoint.sh" >> /root/.bashrc
+RUN echo "source /catkin_ws/devel/setup.bash" >> /root/.bashrc
+
+RUN apt install -y python3-pip
+COPY requirements.txt .
+RUN python3 -m pip install -r requirements.txt
+RUN python3 -m pip install panda-python
+
+# build franka controller
+RUN apt install -y ros-noetic-franka-ros
+COPY ./deps/serl_franka_controllers src/serl_franka_controllers
+RUN source /opt/ros/noetic/setup.sh \
+    && catkin_make -DCMAKE_BUILD_TYPE=Release
+
+# change /opt/ros/noetic/share/franka_control/config/franka_control_node.yaml 'realtime_config: enforce' to 'ignore'
+RUN sed -i 's/realtime_config: enforce/realtime_config: ignore/g' /opt/ros/noetic/share/franka_control/config/franka_control_node.yaml
+RUN sed -i 's/publish_rate: 30  # \[Hz\]/publish_rate: 100  # \[Hz\]/g' /opt/ros/noetic/share/franka_control/config/default_controllers.yaml
+
+COPY ./entrypoint.sh /
+RUN chmod +x /entrypoint.sh

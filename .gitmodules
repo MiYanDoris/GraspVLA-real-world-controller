@@ -1,0 +1,4 @@
+[submodule "deps/serl_franka_controllers"]
+	path = deps/serl_franka_controllers
+	url = git@github.com:JS00000/serl_franka_controllers.git
+    

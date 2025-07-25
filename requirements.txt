@@ -1,0 +1,8 @@
+pyzmq
+numpy
+scipy
+pyrealsense2
+transforms3d
+opencv-python
+debugpy
+pynput

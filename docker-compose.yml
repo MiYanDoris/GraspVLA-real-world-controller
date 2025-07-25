@@ -1,0 +1,96 @@
+services:
+  roscore:
+    image: franka_ros:latest
+    build: .
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    command: roscore
+
+  franka_controller:
+    image: franka_ros:latest
+    build: .
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    environment:
+      - ROBOT_IP=${ROBOT_IP}
+    depends_on:
+      - roscore
+    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && roslaunch --wait serl_franka_controllers impedance.launch robot_ip:=$ROBOT_IP load_gripper:=true'
+
+  franka_controller_joint:
+    image: franka_ros:latest
+    build: .
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    environment:
+      - ROBOT_IP=${ROBOT_IP}
+    depends_on:
+      - roscore
+    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && rosparam set /target_joint_positions "[0.2091,0.1426,0.1644,-2.1438,0.0111,2.2028,0.3657]" && roslaunch --wait serl_franka_controllers joint.launch robot_ip:=$ROBOT_IP load_gripper:=true'
+
+  rviz:
+    image: franka_ros:latest
+    build: .
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /dev/dri:/dev/dri
+      - .:/catkin_ws/src/vla-franka
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    depends_on:
+      - roscore
+    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && rviz -d /catkin_ws/src/vla-franka/res/rviz_config.rviz'
+
+  main:
+    image: franka_ros:latest
+    build: .
+    environment:
+      - FRONT_CAMERA_SERIAL_NUMBER=${FRONT_CAMERA_SERIAL_NUMBER}
+      - SIDE_CAMERA_SERIAL_NUMBER=${SIDE_CAMERA_SERIAL_NUMBER}
+      - SERVER_IP=${SERVER_IP}
+      - SERVER_PORT=${SERVER_PORT}
+      - ROBOT_IP=${ROBOT_IP}
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - .:/catkin_ws/src/vla-franka
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    depends_on:
+      - roscore
+      - franka_controller
+      - rviz
+    working_dir: /catkin_ws/src/vla-franka
+    # TODO: this doesn't work with '--help' as argument
+    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && python3 main.py --front-camera $FRONT_CAMERA_SERIAL_NUMBER --side-camera $SIDE_CAMERA_SERIAL_NUMBER --server-ip $SERVER_IP --server-port $SERVER_PORT --extented_finger'
+  
+  calibrate_camera:
+    image: franka_ros:latest
+    build: .
+    volumes:
+      - .:/catkin_ws/src/vla-franka
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    environment:
+      - FRONT_CAMERA_SERIAL_NUMBER=${FRONT_CAMERA_SERIAL_NUMBER}
+      - SIDE_CAMERA_SERIAL_NUMBER=${SIDE_CAMERA_SERIAL_NUMBER}
+    depends_on:
+      - roscore
+      - franka_controller_joint
+      - rviz
+    working_dir: /catkin_ws/src/vla-franka
+    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && python3 calibrate_camera.py --front-camera $FRONT_CAMERA_SERIAL_NUMBER --side-camera $SIDE_CAMERA_SERIAL_NUMBER'
