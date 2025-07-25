@@ -27,7 +27,10 @@ class FrankaROSController:
     ROBOT_MODES_UNCONTROLLABLE = [ROBOT_MODE_GUIDING, ROBOT_MODE_USER_STOPPED, ROBOT_MODE_AUTOMATIC_ERROR_RECOVERY]
     BASE_FRAME_ID = 'panda_link0'
     EEF_FRAME_ID = 'panda_EE'
-    def __init__(self, extented_finger):
+    def __init__(self, time_mode, extented_finger):
+        assert time_mode in ['logical', 'physical']
+        self.time_mode = time_mode
+
         if extented_finger:
             self.REAL_EEF_TO_SIM_EEF = np.array([
                 [1., 0., 0., 0.],
@@ -45,17 +48,30 @@ class FrankaROSController:
 
         # set controller parameters
         self.dynamic_param_client = Client("/cartesian_impedance_controllerdynamic_reconfigure_compliance_param_node")
-        self.dynamic_param_client.update_configuration({"filter_d_order": 1})
-        self.dynamic_param_client.update_configuration({"filter_params": 0.005})
-        self.dynamic_param_client.update_configuration({"translational_stiffness": 2000.0})
-        self.dynamic_param_client.update_configuration({"translational_damping": 89.0})
-        self.dynamic_param_client.update_configuration({"rotational_stiffness": 150.0})
-        self.dynamic_param_client.update_configuration({"rotational_damping": 7.0})
-        self.dynamic_param_client.update_configuration({"nullspace_stiffness": 0.2})
-        self.dynamic_param_client.update_configuration({"joint1_nullspace_stiffness": 100.0})
-        for direction in ['x', 'y', 'z', 'neg_x', 'neg_y', 'neg_z']:
-            self.dynamic_param_client.update_configuration({"translational_clip_" + direction: 0.01})
-            self.dynamic_param_client.update_configuration({"rotational_clip_" + direction: 0.05})
+        if self.time_mode == 'logical':
+            self.dynamic_param_client.update_configuration({"filter_d_order": 1})
+            self.dynamic_param_client.update_configuration({"filter_params": 0.005})
+            self.dynamic_param_client.update_configuration({"translational_stiffness": 2000.0})
+            self.dynamic_param_client.update_configuration({"translational_damping": 89.0})
+            self.dynamic_param_client.update_configuration({"rotational_stiffness": 150.0})
+            self.dynamic_param_client.update_configuration({"rotational_damping": 7.0})
+            self.dynamic_param_client.update_configuration({"nullspace_stiffness": 0.2})
+            self.dynamic_param_client.update_configuration({"joint1_nullspace_stiffness": 100.0})
+            for direction in ['x', 'y', 'z', 'neg_x', 'neg_y', 'neg_z']:
+                self.dynamic_param_client.update_configuration({"translational_clip_" + direction: 0.01})
+                self.dynamic_param_client.update_configuration({"rotational_clip_" + direction: 0.05})
+        elif self.time_mode == 'physical':
+            self.dynamic_param_client.update_configuration({"filter_d_order": 3})
+            self.dynamic_param_client.update_configuration({"filter_params": 0.004})
+            self.dynamic_param_client.update_configuration({"translational_stiffness": 2000.0})
+            self.dynamic_param_client.update_configuration({"translational_damping": 89.0})
+            self.dynamic_param_client.update_configuration({"rotational_stiffness": 150.0})
+            self.dynamic_param_client.update_configuration({"rotational_damping": 7.0})
+            self.dynamic_param_client.update_configuration({"nullspace_stiffness": 0.2})
+            self.dynamic_param_client.update_configuration({"joint1_nullspace_stiffness": 100.0})
+            for direction in ['x', 'y', 'z', 'neg_x', 'neg_y', 'neg_z']:
+                self.dynamic_param_client.update_configuration({"translational_clip_" + direction: 0.02})
+                self.dynamic_param_client.update_configuration({"rotational_clip_" + direction: 0.05})
 
         # to notify the keep_available thread that the robot state has updated
         self.robot_mode = None
@@ -84,7 +100,7 @@ class FrankaROSController:
         while self.latest_franka_state is None or self.external_force is None:
             time.sleep(0.1)
 
-        self.thread_monitor_robot_state = threading.Thread(target=self.monitor_robot_state)
+        self.thread_monitor_robot_state = threading.Thread(target=self.monitor_robot_state, daemon=True)
         self.thread_monitor_robot_state.start()
 
     def reset_history(self):
@@ -170,7 +186,10 @@ class FrankaROSController:
             for pos, ori_mat, gripper_action in waypoints
         ]
 
-        self._execute_waypoints_logical(waypoints)
+        if self.time_mode == 'logical':
+            self._execute_waypoints_logical(waypoints)
+        elif self.time_mode == 'physical':
+            self._execute_waypoints_physical(waypoints)
 
     def _execute_waypoints_logical(self, waypoints):
         """
@@ -206,18 +225,45 @@ class FrankaROSController:
                 raise RuntimeError('robot abnormal')
 
             self.history_waypoints.append((*waypoint[:2], 1 if self.gripper_status == 'open' else -1))
+
+    def _execute_waypoints_physical(self, waypoints):
+        if self.abnormal:
+            raise RuntimeError('robot abnormal')
+        first_ga = 0.
+        for wp in waypoints:
+            if wp[-1] != 0:
+                first_ga = wp[-1]
+                break
+        if not (self.gripper_status == 'close' and first_ga == 1.):
+            self.set_waypoint(*waypoints[-1][:2])
+
+        for pos, ori_mat, gripper_action in waypoints:
+            desired_gripper_status = None
+            if gripper_action == -1. and self.gripper_status != 'close':
+                desired_gripper_status = 'close'
+            elif gripper_action == 1. and self.gripper_status != 'open':
+                desired_gripper_status = 'open'
             if desired_gripper_status is not None:
-                for _ in range(4):
-                    self.history_waypoints.append((*waypoint[:2], 1 if self.gripper_status == 'open' else -1))
+                if self.abnormal:
+                    raise RuntimeError('robot abnormal')
+                try:
+                    self._wait_for_reach(pos, ori_mat, pos_tol=0.01, rot_tol=10/180*np.pi, timeout=2, ignore_error=True)
+                except TimeoutError:
+                    pass
+                self.move_gripper(desired_gripper_status)
+                break
 
     def get_eef_pose(self, before=0.):
-        if len(self.history_waypoints) == 0:
-            self.history_waypoints.append(self._get_eef_pose_from_ros(0.))
-        idx = round(before / 0.1)
-        if idx + 1 > len(self.history_waypoints):
-            waypoint = self.history_waypoints[0]
+        if self.time_mode == 'logical':
+            if len(self.history_waypoints) == 0:
+                self.history_waypoints.append(self._get_eef_pose_from_ros(0.))
+            idx = round(before / 0.1)
+            if idx + 1 > len(self.history_waypoints):
+                waypoint = self.history_waypoints[0]
+            else:
+                waypoint = self.history_waypoints[-(1+idx)]
         else:
-            waypoint = self.history_waypoints[-(1+idx)]
+            waypoint = self._get_eef_pose_from_ros(before)
         return np.array([*waypoint[0], *t3d.euler.mat2euler(waypoint[1]), waypoint[2]])
 
     def _get_eef_pose_from_ros(self, before):

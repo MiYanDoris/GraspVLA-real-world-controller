@@ -24,7 +24,8 @@ class GraspMode:
         self.side_camera = Camera(args.side_camera)
         self.camera_visualizer = CameraVisualizer(OrderedDict({'front': self.front_camera, 'side': self.side_camera}))
 
-        self.robot_controller = controllers.FrankaROSController(args.extented_finger)
+        self.blocking = self.args.controller == "blocking"
+        self.robot_controller = controllers.FrankaROSController("logical" if self.blocking else "physical", args.extented_finger)
 
         self.robot_lock = threading.RLock()
 
@@ -115,7 +116,7 @@ class GraspMode:
 
                     step_info["actions"] = abs_actions
                     try:
-                        self.execute_waypoints_and_wait(abs_actions, timeout=2)
+                        self.execute_waypoints_and_wait(abs_actions, timeout=2 if self.blocking else 0)
                     except RuntimeError:
                         continue
         

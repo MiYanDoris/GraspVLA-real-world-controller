@@ -7,6 +7,7 @@ import argparse
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("--front-camera", type=str, help="front camera serial number")
 arg_parser.add_argument("--side-camera", type=str, help="side camera serial number")
+arg_parser.add_argument("--controller", default="blocking", choices=["blocking", "nonblocking"])
 arg_parser.add_argument("--automatically_put_down", action='store_true', help="automatically put down the object after grasping")
 arg_parser.add_argument("--extented_finger", action='store_true', help="use the extention of the finger")
 arg_parser.add_argument("--server-ip", type=str)

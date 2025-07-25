@@ -61,6 +61,7 @@ services:
       - SERVER_PORT=${SERVER_PORT}
       - ROBOT_IP=${ROBOT_IP}
       - DISPLAY=${DISPLAY}
+      - MODE=${MODE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - .:/catkin_ws/src/vla-franka
@@ -74,7 +75,7 @@ services:
       - rviz
     working_dir: /catkin_ws/src/vla-franka
     # TODO: this doesn't work with '--help' as argument
-    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && python3 main.py --front-camera $FRONT_CAMERA_SERIAL_NUMBER --side-camera $SIDE_CAMERA_SERIAL_NUMBER --server-ip $SERVER_IP --server-port $SERVER_PORT --extented_finger'
+    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && python3 main.py --front-camera $FRONT_CAMERA_SERIAL_NUMBER --side-camera $SIDE_CAMERA_SERIAL_NUMBER --server-ip $SERVER_IP --server-port $SERVER_PORT --extented_finger --controller $MODE'
   
   calibrate_camera:
     image: franka_ros:latest

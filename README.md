@@ -70,20 +70,21 @@ source demo.env
 docker compose run --rm main
 ```
 
-**NOTE**: Remember to run `docker compose down -t 0` after the experiments.
+* Remember to run `docker compose down -t 0` after the experiments.
 
-### Usage Tips
-  - Start with simple cases (e.g., a single banana on a table) to test the pipeline
+* Start with simple cases (e.g., a single banana on a table) to test the pipeline
 
-  - When prompted, type the object name and press enter. The client will auto-complete the instruction as "pick up {object_name}".
+* When prompted, type the object name and press enter. The client will auto-complete the instruction as "pick up {object_name}".
 
-  - Controls: 
+* Controls: 
   
-    - `p` - pause the robot
-    
-    - `q` - finish trajectory and reset to initial pose (opens gripper)
+  - `p` - pause the robot
+  
+  - `q` - finish trajectory and reset to initial pose (opens gripper)
 
-  - The precision of the controller decreases near the edge of the workspace, and the success rate may therefore degrade.
+* Try nonblocking mode by setting `MODE` to `nonblocking` in `demo.env`.
+
+* The precision of the controller decreases near the edge of the workspace, and the success rate may therefore degrade.
 
 ### Terminal Output
 - `observation sent...` - Observation sent to server
