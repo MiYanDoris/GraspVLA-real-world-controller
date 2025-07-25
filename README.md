@@ -3,6 +3,8 @@ This repository contains the client code used to control a Franka robot in the r
 - Model server code is available [here](https://github.com/PKU-EPIC/GraspVLA).
 - Simulation evaluation code is available [here](https://github.com/MiYanDoris/GraspVLA-playground).
 
+**CAUTION:
+Ensure that the emergency stop button is available. If the robot arm behaves abnormally, press the emergency stop immediately.**
 
 ## Hardware Requirements
 - **Robot**: A Franka robot. The default Dockerfile supports the latest Franka Research 3. For earlier FER3 versions, use Dockerfile_FER3.
@@ -42,19 +44,21 @@ docker build . -t graspvla_franka_ros:latest
 
 <img src="res/camera_setup.jpg" alt="camera_setup_ours" width="70%" height="70%" style="display: block; margin: 0 auto;">
 
-- **Calibration (Rough)**. Since we randomize the camera extrinsics in our dataset, you only need to roughly align your camera setup with the image above. The definition of the robot coordinate system and the camera transformations are shown in the figure.
+- **Approximate Calibration**. Since camera extrinsics are randomized in our dataset, you only need to approximately match your camera setup to the one shown above.
 
-  - **Step 1**: Use a tape measure to roughly position the two cameras.
+  - **Step 1**: Roughly position the two cameras with a tape measure according to the above figure.
 
-  - **Step 2**: Run `xhost + && source demo.env && docker compose run calibrate_camera` to adjust rotation. ⚠️ Note that, the end effector will move to z=0.2m—ensure the table is lower than that to avoid collisions. Once the arm stops moving, align the green reference mask in RViz (front_ref/side_ref) with the actual images and check that the cameras are level (table edges should appear roughly horizontal). We provide our own reference images below for reference.
-    
+    **Step 2**: Ensure that your table surface is below z=0.2m in robot base frame, as the end effector will automatically move to z=0.2m in the next step.
+
+  - **Step 3**: Run `xhost + && source demo.env && docker compose run calibrate_camera` for further calibration. Once the arm stops moving, adjust your camera poses such that the green reference mask (front_ref/side_ref) aligns with the real-world images in RViz. Also verify that the cameras are level, such that table edges appear roughly horizontal. You can refer to the below image for calibrated status.
+
 <img src="res/camera_ref.jpg" alt="camera_setup_ours" width="50%" height="50%" style="display: block; margin: 0 auto;">
 
 
 ### Connection to the Model Server
 Start the model server following the instructions in [GraspVLA](https://github.com/PKU-EPIC/GraspVLA) and modify the `SERVER_IP` and `SERVER_PORT` in `demo.env` to your server ip and port. If you use remote server, you can set them to be its public address. If you start the server on the same machine as the client, you can set them to be 127.0.0.1 and 6666.
 
-You can run the following command to validate the server is running. It will return ✓ if the server returns a valid dict.
+You can run the following command to validate the server is running. It will return ✓ if the server returns a valid result.
 ```
 source demo.env
 python3 validate_server.py
@@ -71,7 +75,7 @@ docker compose run main
 ### Usage Tips
   - Start with simple cases (e.g., a single banana on a table) to test the pipeline
 
-  - When prompted, just type the object name. It will auto-complete to "pick up (object name)".
+  - When prompted, type the object name and press enter. The client will auto-complete the instruction as "pick up {object_name}".
 
   - Controls: 
   
@@ -79,14 +83,16 @@ docker compose run main
     
     - `q` - finish trajectory and reset to initial pose (opens gripper)
 
-### Output Indicators:
+  - The precision of the controller decreases near the edge of the workspace, and the success rate may therefore degrade.
+
+### Terminal Output
 - `observation sent...` - Observation sent to server
 
 - `response received, cost xxx.xxs` - Response received
 
 - Gripper actions and delta translations are printed in console
 
-### Safety Features:
+### Safety Features
 - To avoid objects from falling when opening the gripper (q), enable automatic lowering by adding `--automatically_put_down` flag to `docker-compose.yml`. It will move down the gripper by 10cm before opening the gripper to prevent the object from falling and breaking.
 
 - When the robot receives an external force larger than FORCE_LIMIT (default 15N), it will print `large external force or robot abnormal, trying to recover...` and lift by 5cm to avoid collision.

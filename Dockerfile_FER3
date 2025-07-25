@@ -4,9 +4,6 @@ FROM osrf/ros:noetic-desktop-full
 # parameters
 ##################
 
-# Set IP of Franka control PC
-ENV FCI_IP=172.16.0.2
-
 ##################
 # libfranka build
 ##################
