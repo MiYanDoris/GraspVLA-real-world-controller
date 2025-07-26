@@ -84,7 +84,7 @@ docker compose run --rm main
 
 * Nonblocking mode:
 
-  - Set `MODE` to `nonblocking` in `demo.env`. 
+  - Set `MODE` to `nonblocking` in `demo.env` and run `source demo.env && docker compose run --rm main`. 
   
   - Parameters are pre-tuned for ~250ms inference delay. Adjust according to the inference delay in your environment.
 
