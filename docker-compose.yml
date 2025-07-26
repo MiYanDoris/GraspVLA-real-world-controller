@@ -76,7 +76,22 @@ services:
     working_dir: /catkin_ws/src/vla-franka
     # TODO: this doesn't work with '--help' as argument
     command: /bin/bash -c '. /catkin_ws/devel/setup.bash && python3 main.py --front-camera $FRONT_CAMERA_SERIAL_NUMBER --side-camera $SIDE_CAMERA_SERIAL_NUMBER --server-ip $SERVER_IP --server-port $SERVER_PORT --extented_finger --controller $MODE'
-  
+ 
+  validate_server:
+    image: franka_ros:latest
+    build: .
+    environment:
+      - SERVER_IP=${SERVER_IP}
+      - SERVER_PORT=${SERVER_PORT}
+    volumes:
+      - .:/catkin_ws/src/vla-franka
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    working_dir: /catkin_ws/src/vla-franka
+    command: /bin/bash -c '. /catkin_ws/devel/setup.bash && python3 validate_server.py'
+
   calibrate_camera:
     image: franka_ros:latest
     build: .
