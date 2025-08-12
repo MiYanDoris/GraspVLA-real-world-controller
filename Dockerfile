@@ -63,6 +63,3 @@ RUN sed -i 's/publish_rate: 30  # \[Hz\]/publish_rate: 100  # \[Hz\]/g' /catkin_
 RUN apt install -y python3-pip
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
-
-COPY ./entrypoint.sh /
-RUN chmod +x /entrypoint.sh

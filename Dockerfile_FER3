@@ -55,6 +55,3 @@ RUN source /opt/ros/noetic/setup.sh \
 # change /opt/ros/noetic/share/franka_control/config/franka_control_node.yaml 'realtime_config: enforce' to 'ignore'
 RUN sed -i 's/realtime_config: enforce/realtime_config: ignore/g' /opt/ros/noetic/share/franka_control/config/franka_control_node.yaml
 RUN sed -i 's/publish_rate: 30  # \[Hz\]/publish_rate: 100  # \[Hz\]/g' /opt/ros/noetic/share/franka_control/config/default_controllers.yaml
-
-COPY ./entrypoint.sh /
-RUN chmod +x /entrypoint.sh
