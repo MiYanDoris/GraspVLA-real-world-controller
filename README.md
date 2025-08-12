@@ -15,7 +15,7 @@ Ensure that the emergency stop button is available. If the robot arm behaves abn
 ## Installation
 
 1. Install docker (https://docs.docker.com/engine/install/);
-2. Run `docker build . -t graspvla_franka_ros:latest`.
+2. Run `docker build . -t franka_ros:latest`.
 
 ## Configuration
 ### Franka
