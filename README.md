@@ -41,17 +41,24 @@ Ensure that the emergency stop button is available. If the robot arm behaves abn
 
     <img src="res/camera_setup.jpg" alt="camera_setup_ours" width="70%" height="70%" style="display: block; margin: 0 auto;">
 
-- **Approximate Calibration**. Since camera extrinsics are randomized in our dataset, you only need to approximately match your camera setup to the one shown above. Following the steps below:
+- **Calibration**. Precise calibration is critical for action prediction accuracy; please follow these steps carefully.
 
-  1. Roughly position the two cameras with a tape measure according to the above figure.
+  1. Position the two cameras with a tape measure according to the above figure.
 
   2. Ensure that your table surface is below z=0.2m in robot base frame, as the end effector will automatically move to z=0.2m in the next step.
 
-  3. Run `xhost + && source demo.env && docker compose run --rm calibrate_camera` for further calibration. Once the arm stops moving, adjust your camera poses such that the green reference mask (front_ref/side_ref) aligns with the real-world images in RViz. Also verify that the cameras are level, such that table edges appear roughly horizontal. You can refer to the below image for calibrated status.
+  3. Run `xhost + && source demo.env && docker compose run --rm calibrate_camera` for further calibration. (If the robot arm is not moving, you can run this command again.) Once the arm stops moving, adjust your camera poses such that the green reference mask (front_ref/side_ref) aligns with the real-world images in RViz. You can refer to the below image for calibrated status.
 
     <img src="res/camera_ref.jpg" alt="camera_setup_ours" width="50%" height="50%" style="display: block; margin: 0 auto;">
 
-  4. Run `docker compose down -t 0`.
+  4. Validate Alignment:
+    - Front View: the robot base should be roughly centered in the front view and the table should be roughly horizontal.
+    - Side View: the crosshair should be roughly aligned with the table center (x=0.5m, y=0m, z=0.1m) and the table edges should appear roughly horizontal.
+    - Both cameras should appear level.
+  
+  5. Once you finish the calibration, run `docker compose down -t 0`.
+
+  6. Troubleshooting: revisit this calibration if action accuracy is low. This process can be complex; please post an issue if you require assistance, and we will be glad to help.
 
 ### Connection to the Model Server
 Start the model server following the instructions in [GraspVLA](https://github.com/PKU-EPIC/GraspVLA) and modify the `SERVER_IP` and `SERVER_PORT` in `demo.env` to your server ip and port. If you use remote server, you can set them to be its public address. If you start the server on the same machine as the client, you can set them to be `127.0.0.1` and `6666`.
